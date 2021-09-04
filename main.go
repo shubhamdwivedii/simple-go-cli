@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -41,15 +42,23 @@ It will have several subcommands and flags.`, // help message
 		Use:   "times [strings to echo]",
 		Short: "prints given strings to stdout multiple times",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		// RunE is just like Run except it can return an "error"
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if times == 0 {
+				return errors.New("Times Cannot Be Zero")
+			}
 			for i := 0; i < times; i++ {
 				fmt.Println("Echo: " + strings.Join(args, " "))
 			}
+			return nil
 		},
 	} // run > go run main.go help echo // OR go run main.go echo -help
 	// this will show times under commands.
 	// run > go run main.go echo times -help
 	// run > go run main.go echo times -t 12 shubham dwivedi
+	// run > go run main.go echo times -t 0 shubham // to force error
+
+	// You can implement custom validator using RunE
 )
 
 /* Cobra has concept of Two Different Flags **************
@@ -69,8 +78,8 @@ func init() { // BoolVarP() takes: p *bool, name, shorthand, value, usage
 
 	// '1' is default value of 't' ie: times
 	timesCmd.Flags().IntVarP(&times, "times", "t", 1, "number of times to echo to stdout")
+	timesCmd.MarkFlagRequired("times") // flags can be marked as required.
 	rootCmd.AddCommand(echoCmd)
-
 	echoCmd.AddCommand(timesCmd)
 	// timesCmd is subcommand to echoCmd (which is itself subcommand of rootCmd)
 }
